@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Book Service - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="grid lg:grid-cols-2 gap-8">
+        <!-- Worker Details -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold mb-4">{{ worker.name }}</h2>
+            
+            <div class="mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="text-yellow-500 text-xl">
+                        {% for i in range(5) %}
+                            <i class="fas fa-star{{ ' text-gray-300' if i >= worker.rating else '' }}"></i>
+                        {% endfor %}
+                    </div>
+                    <span class="text-gray-600 font-medium">{{ worker.rating }}/5.0</span>
+                </div>
+                <p class="text-gray-600">
+                    <i class="fas fa-map-marker-alt mr-2"></i>{{ worker.locality }}, {{ worker.city }}
+                </p>
+            </div>
+            
+            <!-- Badges -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                {% if worker.police_verified %}
+                <span class="badge badge-verified">
+                    <i class="fas fa-shield-alt mr-1"></i>Police Verified
+                </span>
+                {% endif %}
+                {% if worker.eco_friendly %}
+                <span class="badge badge-eco">
+                    <i class="fas fa-leaf mr-1"></i>Eco-Friendly Services
+                </span>
+                {% endif %}
+                {% if worker.vaccination_status == 'fully_vaccinated' %}
+                <span class="badge badge-vaccinated">
+                    <i class="fas fa-syringe mr-1"></i>Fully Vaccinated
+                </span>
+                {% endif %}
+            </div>
+            
+            <div class="mb-4">
+                <h4 class="font-semibold mb-2">Skills & Expertise:</h4>
+                <div class="flex flex-wrap gap-2">
+                    {% for skill in worker.skills.split(',') %}
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                        {{ skill.strip() }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-gray-600">
+                    <i class="fas fa-briefcase mr-2"></i>{{ worker.experience }} years experience
+                </p>
+                <p class="text-gray-600">
+                    <i class="fas fa-check-circle mr-2"></i>{{ worker.total_jobs }} jobs completed
+                </p>
+            </div>
+            
+            {% if worker.description %}
+            <div class="mb-4">
+                <h4 class="font-semibold mb-2">About:</h4>
+                <p class="text-gray-700">{{ worker.description }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-semibold">Base Rate:</span>
+                    <span class="text-3xl font-bold text-green-600">₹{{ worker.hourly_rate }}</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-2">
+                    <i class="fas fa-info-circle mr-1"></i>Final price includes materials, tax, and surge pricing
+                </p>
+            </div>
+        </div>
+        
+        <!-- Booking Form -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-2xl font-bold mb-6">Book This Service</h3>
+            
+            <form method="POST" id="bookingForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Service Type *</label>
+                    <select name="service_type" id="serviceType" required 
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                        <option value="">Select a service</option>
+                        {% for skill in worker.skills.split(',') %}
+                        <option value="{{ skill.strip() }}">{{ skill.strip() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Description *</label>
+                    <textarea name="description" rows="3" required 
+                              placeholder="Describe what you need done in detail..."
+                              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Service Location *</label>
+                    <textarea name="location" rows="2" required 
+                              placeholder="Complete address where service is needed"
+                              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Locality *</label>
+                    <input type="text" name="locality" required value="{{ session.user_locality }}"
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Preferred Date *</label>
+                        <input type="date" name="preferred_date" id="preferredDate" required 
+                               min="{{ datetime.now().strftime('%Y-%m-%d') }}"
+                               onchange="updatePricing()"
+                               class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Preferred Time *</label>
+                        <select name="preferred_time" id="preferredTime" required onchange="updatePricing()"
+                                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="">Select time</option>
+                            <option value="09:00">9:00 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="11:00">11:00 AM</option>
+                            <option value="12:00">12:00 PM</option>
+                            <option value="13:00">1:00 PM</option>
+                            <option value="14:00">2:00 PM</option>
+                            <option value="15:00">3:00 PM</option>
+                            <option value="16:00">4:00 PM</option>
+                            <option value="17:00">5:00 PM</option>
+                            <option value="18:00">6:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Group Booking Option -->
+                <div class="mb-4">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="group_booking" class="mr-2">
+                        <i class="fas fa-users text-blue-500 mr-2"></i>
+                        <span>Group Booking (15% discount if neighbors join)</span>
+                    </label>
+                </div>
+                
+                <!-- Dynamic Pricing Display -->
+                <div id="pricingBreakdown" class="bg-blue-50 p-4 rounded-lg mb-6 hidden">
+                    <h4 class="font-semibold text-blue-800 mb-3">
+                        <i class="fas fa-calculator mr-2"></i>Price Breakdown
+                    </h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Labor Cost:</span>
+                            <span id="laborCost">₹0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Material Cost (est.):</span>
+                            <span id="materialCost">₹0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>GST (18%):</span>
+                            <span id="taxAmount">₹0</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-600">
+                            <span>Surge Multiplier:</span>
+                            <span id="surgeMultiplier">1.0x</span>
+                        </div>
+                        <div class="border-t pt-2 flex justify-between font-bold text-lg">
+                            <span>Total:</span>
+                            <span class="text-green-600" id="finalPrice">₹0</span>
+                        </div>
+                    </div>
+                    {% if session.is_premium %}
+                    <p class="text-xs text-green-600 mt-2">
+                        <i class="fas fa-crown mr-1"></i>Premium member discount applied!
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 font-semibold text-lg">
+                    <i class="fas fa-paper-plane mr-2"></i>Send Booking Request
+                </button>
+            </form>
+            
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h4 class="font-semibold mb-3">What happens next?</h4>
+                <ol class="text-sm text-gray-600 space-y-2">
+                    <li class="flex items-start">
+                        <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 flex-shrink-0">1</span>
+                        <span>Worker receives your request notification</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 flex-shrink-0">2</span>
+                        <span>They can accept or decline within 24 hours</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 flex-shrink-0">3</span>
+                        <span>You'll get confirmation with contact details</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 flex-shrink-0">4</span>
+                        <span>Track service in real-time on booking day</span>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function updatePricing() {
+    const serviceType = document.getElementById('serviceType').value;
+    const date = document.getElementById('preferredDate').value;
+    const time = document.getElementById('preferredTime').value;
+    
+    if (!serviceType || !date || !time) return;
+    
+    try {
+        const response = await fetch('/api/pricing_estimate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({service_type: serviceType, date: date, time: time})
+        });
+        
+        const pricing = await response.json();
+        
+        document.getElementById('laborCost').textContent = '₹' + pricing.labor_cost;
+        document.getElementById('materialCost').textContent = '₹' + pricing.material_cost;
+        document.getElementById('taxAmount').textContent = '₹' + pricing.tax;
+        document.getElementById('surgeMultiplier').textContent = pricing.surge_multiplier + 'x';
+        document.getElementById('finalPrice').textContent = '₹' + pricing.final_price;
+        document.getElementById('pricingBreakdown').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error fetching pricing:', error);
+    }
+}
+</script>
+{% endblock %}

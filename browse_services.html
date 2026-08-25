@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category }} Services - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-3xl font-bold mb-2">{{ category }} Professionals</h2>
+    <p class="text-gray-600">Find verified {{ category.lower() }} experts in your area</p>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h3 class="font-semibold mb-4 flex items-center">
+        <i class="fas fa-filter mr-2"></i>Filter Results
+    </h3>
+    <form method="GET" class="grid md:grid-cols-4 gap-4">
+        <div>
+            <label class="block text-sm font-medium mb-2">Locality</label>
+            <input type="text" name="locality" value="{{ filters.locality or session.user_locality }}" 
+                   placeholder="Enter locality" class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-2">Minimum Rating</label>
+            <select name="min_rating" class="w-full px-3 py-2 border rounded-lg">
+                <option value="0">All Ratings</option>
+                <option value="3" {{ 'selected' if filters.min_rating == '3' }}>3+ Stars</option>
+                <option value="4" {{ 'selected' if filters.min_rating == '4' }}>4+ Stars</option>
+                <option value="4.5" {{ 'selected' if filters.min_rating == '4.5' }}>4.5+ Stars</option>
+            </select>
+        </div>
+        <div>
+            <label class="flex items-center mt-8">
+                <input type="checkbox" name="eco_friendly" value="true" 
+                       {{ 'checked' if filters.eco_friendly == 'true' }} class="mr-2">
+                <i class="fas fa-leaf text-green-500 mr-1"></i>Eco-Friendly Only
+            </label>
+        </div>
+        <div>
+            <label class="flex items-center mt-8">
+                <input type="checkbox" name="verified_only" value="true" 
+                       {{ 'checked' if filters.verified_only == 'true' }} class="mr-2">
+                <i class="fas fa-shield-alt text-blue-500 mr-1"></i>Verified Only
+            </label>
+        </div>
+        <div class="md:col-span-4">
+            <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                <i class="fas fa-search mr-2"></i>Apply Filters
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Workers Grid -->
+{% if workers %}
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for worker in workers %}
+    <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden">
+        <div class="p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-xl font-bold">{{ worker.name }}</h3>
+                    <p class="text-sm text-gray-600">
+                        <i class="fas fa-map-marker-alt mr-1"></i>{{ worker.locality }}, {{ worker.city }}
+                    </p>
+                </div>
+                <div class="text-right">
+                    <div class="text-yellow-500 font-bold text-lg">
+                        <i class="fas fa-star"></i> {{ worker.rating }}
+                    </div>
+                    <p class="text-xs text-gray-500">{{ worker.total_jobs }} jobs</p>
+                </div>
+            </div>
+            
+            <!-- Badges -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                {% if worker.police_verified %}
+                <span class="badge badge-verified">
+                    <i class="fas fa-shield-alt mr-1"></i>Police Verified
+                </span>
+                {% endif %}
+                {% if worker.eco_friendly %}
+                <span class="badge badge-eco">
+                    <i class="fas fa-leaf mr-1"></i>Eco-Friendly
+                </span>
+                {% endif %}
+                {% if worker.vaccination_status == 'fully_vaccinated' %}
+                <span class="badge badge-vaccinated">
+                    <i class="fas fa-syringe mr-1"></i>Vaccinated
+                </span>
+                {% endif %}
+            </div>
+            
+            <!-- Skills -->
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold mb-2">Skills:</h4>
+                <p class="text-sm text-gray-700">{{ worker.skills }}</p>
+            </div>
+            
+            <!-- Description -->
+            {% if worker.description %}
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 line-clamp-2">{{ worker.description }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Experience -->
+            <div class="mb-4 text-sm text-gray-600">
+                <i class="fas fa-briefcase mr-2"></i>{{ worker.experience }} years experience
+            </div>
+            
+            <!-- Price & Book -->
+            <div class="flex justify-between items-center pt-4 border-t">
+                <div>
+                    <p class="text-2xl font-bold text-green-600">₹{{ worker.hourly_rate }}</p>
+                    <p class="text-xs text-gray-500">per hour</p>
+                </div>
+                <a href="{{ url_for('book_service', worker_id=worker.id) }}" 
+                   class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                    Book Now
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-lg shadow-md p-12 text-center">
+    <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+    <h3 class="text-2xl font-semibold text-gray-600 mb-2">No workers found</h3>
+    <p class="text-gray-500 mb-4">Try adjusting your filters or search in a different locality.</p>
+    <a href="{{ url_for('user_dashboard') }}" class="text-blue-500 hover:underline">
+        Back to Dashboard
+    </a>
+</div>
+{% endif %}
+{% endblock %}

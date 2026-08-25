@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Payment History - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold mb-2">Payment History</h2>
+        <p class="text-gray-600">View all your transactions and payments</p>
+    </div>
+    
+    {% if payments %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Type
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Description
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Amount
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Transaction ID
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for payment in payments %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ payment.created_at }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                       {{ 'bg-blue-100 text-blue-800' if payment.payment_type == 'service' else 'bg-purple-100 text-purple-800' }}">
+                                {{ payment.payment_type|capitalize }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {% if payment.service_type %}
+                                {{ payment.service_type }} at {{ payment.location }}
+                            {% else %}
+                                Subscription Payment
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                            ₹{{ "%.2f"|format(payment.amount) }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                       {% if payment.status == 'completed' or payment.status == 'succeeded' %}
+                                           bg-green-100 text-green-800
+                                       {% elif payment.status == 'pending' %}
+                                           bg-yellow-100 text-yellow-800
+                                       {% else %}
+                                           bg-red-100 text-red-800
+                                       {% endif %}">
+                                {{ payment.status|capitalize }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 font-mono">
+                            {% if payment.razorpay_payment_id %}
+                                {{ payment.razorpay_payment_id[:20] }}...
+                                <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Test</span>
+                            {% elif payment.stripe_checkout_session_id %}
+                                {{ payment.stripe_checkout_session_id[:20] }}...
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Summary Card -->
+    <div class="mt-8 grid md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Total Spent</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        ₹{{ "%.2f"|format(payments|sum(attribute='amount')) }}
+                    </p>
+                </div>
+                <div class="bg-blue-100 rounded-full p-3">
+                    <i class="fas fa-rupee-sign text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Total Transactions</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ payments|length }}</p>
+                </div>
+                <div class="bg-green-100 rounded-full p-3">
+                    <i class="fas fa-receipt text-2xl text-green-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-500 text-sm">Successful Payments</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {{ payments|selectattr('status', 'in', ['completed', 'succeeded'])|list|length }}
+                    </p>
+                </div>
+                <div class="bg-purple-100 rounded-full p-3">
+                    <i class="fas fa-check-circle text-2xl text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <i class="fas fa-receipt text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">No Payment History</h3>
+        <p class="text-gray-500 mb-6">You haven't made any payments yet</p>
+        <a href="{{ url_for('user_dashboard') }}" 
+           class="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+            <i class="fas fa-search mr-2"></i>Browse Services
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

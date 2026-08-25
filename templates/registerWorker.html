@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <title>Document</title>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="jumbotron">
+        {% if registered %}
+        <h1>Thanks for registering, Please Log in! <br><br><a href="{%url 'index' %}"><button>Login</button></a>  </h1>
+        {% else %}
+            <h1>Registration for Worker:</h1>
+            {% load crispy_forms_tags %}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ var_workerForm|crispy }}
+                {{ var_workerAddForm|crispy }}
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

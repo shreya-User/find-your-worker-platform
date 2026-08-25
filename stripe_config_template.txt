@@ -1,0 +1,48 @@
+# Stripe Configuration Template
+# Copy these environment variable commands to set up your Stripe integration
+
+# ============================================
+# FOR WINDOWS (PowerShell)
+# ============================================
+$env:STRIPE_SECRET_KEY="sk_test_your_secret_key_here"
+$env:STRIPE_PUBLISHABLE_KEY="pk_test_your_publishable_key_here"
+$env:STRIPE_WEBHOOK_SECRET="whsec_your_webhook_secret_here"
+
+# ============================================
+# FOR WINDOWS (Command Prompt)
+# ============================================
+set STRIPE_SECRET_KEY=sk_test_your_secret_key_here
+set STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
+set STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# ============================================
+# FOR LINUX/MAC
+# ============================================
+export STRIPE_SECRET_KEY="sk_test_your_secret_key_here"
+export STRIPE_PUBLISHABLE_KEY="pk_test_your_publishable_key_here"
+export STRIPE_WEBHOOK_SECRET="whsec_your_webhook_secret_here"
+
+# ============================================
+# INSTRUCTIONS
+# ============================================
+# 1. Get your Stripe API keys from: https://dashboard.stripe.com/test/apikeys
+# 2. Replace "your_secret_key_here" with your actual keys
+# 3. Run the appropriate commands for your operating system
+# 4. Start your Flask application: python app.py
+
+# ============================================
+# FOR PRODUCTION
+# ============================================
+# Use live mode keys (starts with sk_live_ and pk_live_)
+# Set up webhooks at: https://dashboard.stripe.com/webhooks
+# Use HTTPS for your production domain
+
+# ============================================
+# ALTERNATIVE: Direct Configuration in app.py
+# ============================================
+# If you prefer, you can directly edit app.py (lines 544-547):
+# stripe.api_key = 'sk_test_YOUR_SECRET_KEY_HERE'
+# STRIPE_PUBLISHABLE_KEY = 'pk_test_YOUR_PUBLISHABLE_KEY_HERE'
+# STRIPE_WEBHOOK_SECRET = 'whsec_YOUR_WEBHOOK_SECRET_HERE'
+#
+# WARNING: Never commit real API keys to version control!

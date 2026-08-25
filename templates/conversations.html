@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Messages - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6">
+        <h2 class="text-3xl font-bold mb-2">Your Messages</h2>
+        <p class="text-gray-600">Chat with {% if session.user_type == 'user' %}workers{% else %}customers{% endif %}</p>
+    </div>
+    
+    <div id="conversationsList" class="bg-white rounded-lg shadow-lg">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-semibold">Conversations</h3>
+                <div class="text-sm text-gray-500">
+                    <i class="fas fa-sync-alt mr-1"></i>Auto-refreshing...
+                </div>
+            </div>
+        </div>
+        
+        <div id="conversationsContainer" class="divide-y">
+            <div class="p-8 text-center">
+                <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-500">Loading conversations...</p>
+            </div>
+        </div>
+    </div>
+    
+    {% if session.user_type == 'user' %}
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 class="font-semibold text-blue-800 mb-2">
+            <i class="fas fa-info-circle mr-2"></i>How to start chatting
+        </h4>
+        <ul class="text-sm text-blue-700 space-y-1">
+            <li>• Browse workers and click "Chat" on their profile</li>
+            <li>• Start a conversation from any accepted service request</li>
+            <li>• Workers can chat with you even if they're not available</li>
+        </ul>
+    </div>
+    {% else %}
+    <div class="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+        <h4 class="font-semibold text-green-800 mb-2">
+            <i class="fas fa-info-circle mr-2"></i>Chat with customers
+        </h4>
+        <ul class="text-sm text-green-700 space-y-1">
+            <li>• Click "Chat" on any service request to message the customer</li>
+            <li>• You can chat even when marked as unavailable</li>
+            <li>• Set your availability to let customers know when you're free</li>
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+async function loadConversations() {
+    try {
+        const response = await fetch('/api/conversations');
+        const data = await response.json();
+        
+        const container = document.getElementById('conversationsContainer');
+        
+        if (!data.success || !data.conversations || data.conversations.length === 0) {
+            container.innerHTML = `
+                <div class="p-12 text-center">
+                    <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No conversations yet</h3>
+                    <p class="text-gray-500">
+                        {% if session.user_type == 'user' %}
+                        Start chatting with workers by browsing services!
+                        {% else %}
+                        Your conversations with customers will appear here.
+                        {% endif %}
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        data.conversations.forEach(conv => {
+            const unreadBadge = conv.unread_count > 0 ? 
+                `<span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2">${conv.unread_count}</span>` : '';
+            
+            const lastMessage = conv.last_message ? 
+                `<p class="text-sm text-gray-500 truncate">${conv.last_message}</p>` : 
+                '<p class="text-sm text-gray-400 italic">No messages yet</p>';
+            
+            {% if session.user_type == 'user' %}
+            const chatUrl = `/chat/${conv.worker_id}`;
+            const name = conv.worker_name;
+            const phone = conv.worker_phone;
+            {% else %}
+            const chatUrl = `/chat/customer/${conv.customer_id}`;
+            const name = conv.customer_name;
+            const phone = conv.customer_phone;
+            {% endif %}
+            
+            html += `
+                <a href="${chatUrl}" class="block p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center flex-1 min-w-0">
+                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-full w-12 h-12 flex items-center justify-center text-white font-bold mr-4 flex-shrink-0">
+                                ${name.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center">
+                                    <h4 class="font-semibold text-gray-900 truncate">${name}</h4>
+                                    ${unreadBadge}
+                                </div>
+                                ${lastMessage}
+                                <p class="text-xs text-gray-400 mt-1">${new Date(conv.last_message_at).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400 ml-4"></i>
+                    </div>
+                </a>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading conversations:', error);
+        document.getElementById('conversationsContainer').innerHTML = `
+            <div class="p-8 text-center">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                <p class="text-red-600">Error loading conversations. Please refresh the page.</p>
+            </div>
+        `;
+    }
+}
+
+// Load conversations on page load
+loadConversations();
+
+// Auto-refresh every 5 seconds
+setInterval(loadConversations, 5000);
+</script>
+{% endblock %}

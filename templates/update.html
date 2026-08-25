@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>update Page</title>
+	<link rel="stylesheet" href="{% static 'css/login.css' %}">
+	<style>
+	body{
+		background-image: url("{% static 'images/login.jpg' %}");
+		/* background-image: url("{% static 'images/login2.jpg' %}"); */
+	}
+</style>
+</head>
+<body>
+	<section class="container">
+		<div class="span-6">
+		  <div class="login">
+			<h1>Update Your Account..!</h1>
+			<div class="login-content">
+			<form method="POST" action="{% url 'update' id %}">
+			{% csrf_token %}
+            <label id="textLabel">Please enter your username</label>
+            <input type="text" name="username" id="text"  value={{form.username.value}}>
+			<label id="emailLabel">Please enter a valid email</label>
+			<input type="email" name="email" id="email"  value={{form.email.value}}>
+			
+			
+			<input type="submit" value="Update">
+			{% for msg in messages %}
+			<h6 class="heady">{{msg}}</h6>
+			{% endfor%} 
+
+			</form>
+			</div>
+		  </div>
+		</div>
+	
+	</section>
+<script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
+
+
+				      				

@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}Track Service - Find My Worker{% endblock %}
+
+{% block content %}
+
+<style>
+#starRating span {
+    transition: 0.2s;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+#starRating span:hover {
+    transform: scale(1.2);
+}
+</style>
+
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-bold mb-6 text-center">
+            <!-- <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i>Booking Details -->
+             <p>Booking Details</p>
+        </h2>
+        
+        <!-- Service Details -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-8">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-semibold text-lg mb-3">Service Details</h3>
+                    <p class="text-gray-700 mb-2">
+                        <strong>Service:</strong> {{ service_request.service_type }}
+                    </p>
+                    <p class="text-gray-700 mb-2">
+                        <strong>Date:</strong> {{ service_request.preferred_date }}
+                    </p>
+                    <p class="text-gray-700 mb-2">
+                        <strong>Booking Time:</strong> {{ service_request.preferred_time }}
+                    </p>
+                    <p class="text-gray-700">
+                        <strong>Amount:</strong> <span class="text-green-600 font-bold">₹{{ service_request.final_price }}</span>
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg mb-3">Worker Details</h3>
+                    <p class="text-gray-700 mb-2">
+                        <strong>Name:</strong> {{ service_request.worker_name }}
+                    </p>
+                    <p class="text-gray-700 mb-2">
+                        <strong>Phone:</strong> {{ service_request.worker_phone }}
+                    </p>
+                    <!-- <p class="text-gray-700">
+                        <strong>Skills:</strong> {{ service_request.skills }}
+                    </p> -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tracking Timeline -->
+        <div class="mb-8">
+            <h3 class="font-semibold text-lg mb-6 text-center">Service Progress</h3>
+            <div class="space-y-4">
+                {% for stage in tracking_stages %}
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-blue-500 text-white flex items-center justify-center">
+                        <i class="fas fa-{{ stage.icon }}"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <div class="bg-gray-100 rounded-lg p-4">
+                            <h4 class="font-semibold">{{ stage.message }}</h4>
+                            <p class="text-sm text-gray-600">Status: {{ stage.status }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Map Placeholder -->
+        <!-- <div class="bg-gray-200 rounded-lg h-64 flex items-center justify-center mb-6">
+            <div class="text-center">
+                <i class="fas fa-map text-6xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600">Live tracking map will appear here</p>
+                <p class="text-sm text-gray-500">Worker location updates in real-time</p>
+            </div>
+        </div> -->
+        
+        <!-- Quick Actions -->
+        <div class="grid md:grid-cols-3 gap-4">
+            <!-- <button class="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600">
+                <i class="fas fa-phone mr-2"></i>Call Worker
+            </button> -->
+            <!-- <button onclick="callWorker('{{ service_request.worker_phone }}')" 
+                    class="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600">
+                <i class="fas fa-phone mr-2"></i>Call Worker
+            </button> -->
+            <!-- <button onclick="openCallModal('{{ service_request.worker_phone }}')" 
+                    class="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600">
+                <i class="fas fa-phone mr-2"></i>Call Worker
+            </button> -->
+
+            <button onclick="openCallModal('{{ service_request.worker_phone }}')" 
+                    class="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600">
+                <i class="fas fa-phone mr-2"></i>Call Worker
+            </button>
+            <button class="bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600">
+                <i class="fas fa-comment mr-2"></i>Send Message
+            </button>
+            <button class="bg-red-500 text-white py-3 px-6 rounded-lg hover:bg-red-600">
+                <i class="fas fa-exclamation-triangle mr-2"></i>Report Issue
+            </button>
+        </div>
+
+        <!-- ⭐ Review Section -->
+        <div class="mt-8 bg-gray-50 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold mb-4">Give Review</h3>
+
+            <!-- Rating -->
+            <!-- <label class="block mb-2">Rating (1-5)</label>
+            <input type="number" id="rating" min="1" max="5"
+                class="w-full border p-2 rounded mb-4"> -->
+            
+            <!-- ⭐ Star Rating -->
+            <div class="mb-4">
+                <label class="block mb-2">Rating</label>
+                <div id="starRating" class="text-2xl cursor-pointer">
+                    <span onclick="setRating(1)">☆</span>
+                    <span onclick="setRating(2)">☆</span>
+                    <span onclick="setRating(3)">☆</span>
+                    <span onclick="setRating(4)">☆</span>
+                    <span onclick="setRating(5)">☆</span>
+                </div>
+            </div>
+
+            <!-- Review -->
+            <label class="block mb-2">Your Review</label>
+            <textarea id="review" rows="3"
+                    class="w-full border p-2 rounded mb-4"></textarea>
+
+            <!-- Submit -->
+            <button onclick="submitReview()"
+                    class="bg-blue-500 text-white px-4 py-2 rounded">
+                Submit Review
+            </button>
+        </div>
+    </div>
+
+    
+</div>
+
+<!-- <div id="callModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+  <div class="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
+    
+    <h3 class="text-lg font-semibold mb-4">Contact Worker</h3>
+
+    <p id="workerPhone" class="text-xl font-bold mb-4"></p>
+
+    <div class="flex flex-col gap-3">
+      
+      <button onclick="copyNumber()" class="bg-blue-500 text-white py-2 rounded">
+        📋 Copy Number
+      </button>
+
+      <button onclick="closeModal()" class="bg-gray-400 text-white py-2 rounded">
+        Close
+      </button>
+
+    </div>
+
+  </div>
+</div> -->
+
+<div id="callModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+  <div class="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
+    
+    <h3 class="text-lg font-semibold mb-4">Contact Worker</h3>
+
+    <p id="workerPhone" class="text-xl font-bold mb-4"></p>
+
+    <div class="flex flex-col gap-3">
+
+      <!-- Call button (hidden on laptop automatically) -->
+      <button id="callBtn" onclick="callNow()" class="bg-green-500 text-white py-2 rounded">
+        📞 Call Now
+      </button>
+
+      <!-- Copy -->
+      <button onclick="copyNumber()" class="bg-blue-500 text-white py-2 rounded">
+        📋 Copy Number
+      </button>
+
+      <!-- Close -->
+      <button onclick="closeModal()" class="bg-gray-400 text-white py-2 rounded">
+        Close
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+
+
+<!-- <script>
+let currentPhone = "";
+
+function openCallModal(phone) {
+    if (!phone) {
+        alert("Phone number not available");
+        return;
+    }
+
+    currentPhone = phone;
+    document.getElementById("workerPhone").innerText = phone;
+
+    const modal = document.getElementById("callModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+
+function closeModal() {
+    const modal = document.getElementById("callModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
+
+function copyNumber() {
+    navigator.clipboard.writeText(currentPhone);
+    alert("Number copied!");
+}
+</script> -->
+
+<script>
+
+let currentPhone = "";
+
+// Detect mobile device
+function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// Open modal
+function openCallModal(phone) {
+    if (!phone) {
+        alert("Phone number not available");
+        return;
+    }
+
+    currentPhone = phone;
+    document.getElementById("workerPhone").innerText = phone;
+
+    const modal = document.getElementById("callModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    // Show call button only on mobile
+    const callBtn = document.getElementById("callBtn");
+    if (isMobileDevice()) {
+        callBtn.style.display = "block";
+    } else {
+        callBtn.style.display = "none";
+    }
+}
+
+// Close modal
+function closeModal() {
+    const modal = document.getElementById("callModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
+
+// Copy number
+function copyNumber() {
+    navigator.clipboard.writeText(currentPhone);
+    alert("Number copied!");
+}
+
+// Call (mobile only)
+function callNow() {
+    if (!currentPhone) return;
+    window.location.href = "tel:" + currentPhone;
+}
+</script>
+
+<script>
+const requestId = Number("{{ service_request.id }}");
+const workerId = Number("{{ service_request.worker_id }}");
+
+// ⭐ STAR RATING LOGIC
+let selectedRating = 0;
+
+// function setRating(rating) {
+//     selectedRating = rating;
+
+//     const stars = document.querySelectorAll('#starRating span');
+
+//     stars.forEach((star, index) => {
+//         if (index < rating) {
+//             star.innerHTML = '<span style="color: gold;">★</span>';// filled star
+//         } else {
+//             star.innerHTML = '<span style="color: lightgray;">☆</span>';// empty star
+//         }
+//     });
+// }
+
+// function setRating(rating) {
+//     selectedRating = rating;
+
+//     const stars = document.querySelectorAll('#starRating span');
+
+//     stars.forEach((star, index) => {
+//         if (index < rating) {
+//             star.innerHTML = '<span style="color: gold;">★</span>';
+//         } else {
+//             star.innerHTML = '<span style="color: lightgray;">☆</span>';
+//         }
+//     });
+// }
+
+function setRating(rating) {
+    selectedRating = rating;
+
+    const stars = document.querySelectorAll('#starRating span');
+
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.textContent = '★';
+            star.style.color = 'gold';   // ✅ golden
+        } else {
+            star.textContent = '☆';
+            star.style.color = 'lightgray'; // ✅ gray
+        }
+    });
+}
+
+// ⭐ SUBMIT REVIEW
+function submitReview() {
+
+    // validation
+    if (selectedRating === 0) {
+        alert("Please select a rating");
+        return;
+    }
+
+    const reviewText = document.getElementById('review').value;
+
+    fetch('/submit_review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            request_id: requestId,
+            worker_id: workerId,
+            rating: selectedRating,
+            review: reviewText
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Review submitted!");
+
+            // reset UI
+            selectedRating = 0;
+            document.getElementById('review').value = '';
+
+            const stars = document.querySelectorAll('#starRating span');
+            stars.forEach(star => star.textContent = '☆');
+        } else {
+            alert(data.error);
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("Something went wrong");
+    });
+}
+
+</script>
+
+
+{% endblock %}

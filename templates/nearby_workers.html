@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Find Nearby Workers - Find My Worker{% endblock %}
+
+{% block content %}
+
+<!-- Leaflet CSS + JS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<h2 class="text-xl font-bold mb-4">Nearby Workers Map</h2>
+
+<!-- Location Inputs -->
+<div class="mb-4 flex flex-wrap gap-4">
+    <input id="manual-lat" type="number" step="any" placeholder="Latitude" class="border px-2 py-1 rounded">
+    <input id="manual-lon" type="number" step="any" placeholder="Longitude" class="border px-2 py-1 rounded">
+    <select id="service-type" class="border px-2 py-1 rounded">
+        <option value="">Select Service</option>
+        <option value="Plumbing">Plumbing</option>
+        <option value="Electrical Work">Electrical Work</option>
+        <option value="Painting">Painting</option>
+        <option value="AC Repair">AC Repair</option>
+        <option value="Cleaning">Cleaning</option>
+        <option value="Cook">Cook</option>
+        <option value="Driver">Driver</option>
+    </select>
+    <select id="search-radius" class="border px-2 py-1 rounded">
+        <option value="5">5 km</option>
+        <option value="10" selected>10 km</option>
+        <option value="15">15 km</option>
+        <option value="20">20 km</option>
+        <option value="50">50 km</option>
+        <option value="75">75 km</option>
+        <option value="100">100 km</option>
+    </select>
+    <button onclick="getCurrentLocation()" class="bg-blue-500 text-white px-4 py-1 rounded">Use My Location</button>
+    <button onclick="searchNearbyWorkers()" class="bg-green-500 text-white px-4 py-1 rounded">Find Workers</button>
+</div>
+
+<!-- Map Container -->
+<div id="map" class="h-96 w-full rounded-lg border"></div>
+
+<script>
+let map;
+let markers = [];
+let currentLocation = null;
+
+// ----- Icons -----
+const userIcon = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
+    iconSize: [32,32],
+    iconAnchor: [16,32],
+    popupAnchor: [0,-32]
+});
+
+const workerIcon = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/1077/1077012.png',
+    iconSize: [32,32],
+    iconAnchor: [16,32],
+    popupAnchor: [0,-32]
+});
+
+// ----- Get user location -----
+function getCurrentLocation() {
+    if (!navigator.geolocation) {
+        alert("Geolocation not supported");
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(pos => {
+        currentLocation = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+        document.getElementById('manual-lat').value = currentLocation.latitude.toFixed(6);
+        document.getElementById('manual-lon').value = currentLocation.longitude.toFixed(6);
+    }, err => {
+        alert("Unable to get location");
+    }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+// ----- Search nearby workers -----
+function searchNearbyWorkers() {
+    const lat = parseFloat(document.getElementById('manual-lat').value);
+    const lon = parseFloat(document.getElementById('manual-lon').value);
+    const serviceType = document.getElementById('service-type').value;
+    const radius = document.getElementById('search-radius').value;
+
+    if (!lat || !lon || !serviceType) {
+        alert("Please provide location and service type");
+        return;
+    }
+
+    // fetch(`/api/nearby_workers?service_type=${serviceType}&lat=${lat}&lon=${lon}&radius=${radius}`)
+    //     .then(res => res.json())
+    //     .then(data => {
+    //         if (data.success && data.workers.length > 0) {
+    //             displayMap(lat, lon, data.workers);
+    //         } else {
+    //             alert("No workers found nearby");
+    //         }
+    //     })
+    //     .catch(err => {
+    //         console.error(err);
+    //         alert("Server error");
+    //     });
+
+    // fetch(`/api/nearby_workers?service_type=${serviceType}&lat=${lat}&lon=${lon}&radius=${radius}`)
+    // .then(r => r.json())
+    // .then(data => {
+    //     console.log("BACKEND RESPONSE:", data);   // 👈 ADD THIS LINE
+
+    //     if (data.success && data.workers.length > 0) {
+    //         displayMap(lat, lon, data.workers);
+    //     } else {
+    //         alert("No workers found nearby (backend returned empty)");
+    //     }
+    // })
+    // .catch(err => {
+    //     console.error(err);
+    // });
+
+    fetch(`/api/nearby_workers?service_type=${serviceType}&lat=${lat}&lon=${lon}&radius=${radius}`)
+    .then(r => r.json())
+    .then(data => {
+        console.log("BACKEND RESPONSE:", data);
+
+        if (!data.workers || data.workers.length === 0) {
+            alert("No workers found nearby");
+            return;
+        }
+
+        // Normalize lat/lon keys for Leaflet
+        const normalizedWorkers = data.workers.map(w => ({
+            ...w,
+            lat: w.lat ?? w.latitude,
+            lon: w.lon ?? w.longitude
+        }));
+
+        displayMap(lat, lon, normalizedWorkers);
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Server error");
+    });
+
+}
+
+// ----- Display map -----
+function displayMap(lat, lon, workers) {
+
+    // Remove old map if exists
+    if (map) map.remove();
+
+    map = L.map('map').setView([lat, lon], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    markers = [];
+
+    // User marker
+    // markers.push(
+    //     L.marker([lat, lon], {icon: userIcon}).addTo(map)
+    //     .bindPopup("<b>You are here</b>")
+    //     .openPopup()
+    // );
+
+    // ---- User marker ---- 
+    const userMarker = L.marker([lat, lon], { icon: userIcon }) 
+    .addTo(map) 
+    .bindPopup("<b>You are here</b>") 
+    .openPopup(); 
+    markers.push(userMarker);
+
+    // Worker markers
+    // workers.forEach(w => {
+    //     markers.push(
+    //         L.marker([w.lat, w.lon], {icon: workerIcon}).addTo(map)
+    //         .bindPopup(`<b>${w.name}</b><br>${w.distance_km} km away<br>ETA: ${w.eta_minutes ?? 'N/A'} min`)
+    //     );
+    // });
+
+    
+
+    workers.forEach(w => {
+    const workerLat = w.lat ?? w.latitude;
+    const workerLon = w.lon ?? w.longitude;
+
+    if (!workerLat || !workerLon) {
+        console.warn("Skipping worker without coordinates:", w);
+        return;
+    }
+
+    const workerMarker = L.marker([workerLat, workerLon], { 
+        icon: workerIcon 
+    }) 
+    .addTo(map) 
+    .bindPopup(` 
+        <b>${w.name}</b><br> 
+        ${w.distance_km} km away 
+    `); 
+    
+    markers.push(workerMarker); 
+    });
+
+    // L.marker([workerLat, workerLon], { icon: workerIcon })
+    //     .addTo(map)
+    //     .bindPopup(`
+    //         <b>${w.name}</b><br>
+    //         ${w.distance_km} km away
+    //     `);
+
+    // markers.push(
+    //     L.marker([workerLat, workerLon])
+    // );
+    // });
+
+
+    // Auto-zoom to all markers
+    if (markers.length >0){
+    map.fitBounds(
+        L.featureGroup(markers).getBounds().pad(0.2)
+    );
+    }
+}
+</script>
+
+{% endblock %}   

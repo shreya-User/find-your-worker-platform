@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with {{ worker.name }} - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg">
+        <!-- Chat Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="bg-white rounded-full p-2 mr-3">
+                    <i class="fas fa-user-tie text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold">{{ worker.name }}</h2>
+                    <p class="text-sm text-blue-100">{{ worker.skills }}</p>
+                </div>
+            </div>
+            <a href="{{ url_for('user_dashboard') }}" class="text-white hover:text-blue-200">
+                <i class="fas fa-times text-2xl"></i>
+            </a>
+        </div>
+        
+        <!-- Messages Container -->
+        <div id="messagesContainer" class="h-96 overflow-y-auto p-4 bg-gray-50" style="max-height: 500px;">
+            {% for message in messages %}
+            <div class="mb-4 flex {{ 'justify-end' if message.sender_type == 'user' else 'justify-start' }} message-item" data-message-id="{{ message.id }}">
+                <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg {{ 'bg-blue-500 text-white' if message.sender_type == 'user' else 'bg-white text-gray-800 shadow' }}">
+                    <div class="text-xs font-semibold mb-1">
+                        {{ message.sender_name }}
+                    </div>
+                    <div class="text-sm whitespace-pre-line">{{ message.message }}</div>
+                    {% if '**New Time Proposal**' in message.message and message.sender_type == 'user' %}
+                    <div class="mt-2 p-2 bg-yellow-100 rounded text-xs">
+                        <i class="fas fa-clock mr-1"></i>Time Proposal Sent
+                    </div>
+                    {% endif %}
+                    <div class="text-xs mt-1 opacity-75">
+                        {{ message.created_at }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Message Input -->
+        <div class="p-4 border-t bg-white rounded-b-lg">
+            {% if service_request_status == 'declined' and service_request_id %}
+            <div class="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm text-red-800 mb-2">
+                    <i class="fas fa-times-circle mr-2"></i>This service was declined by the worker.
+                </p>
+                <p class="text-xs text-red-700 mb-3">Chat is not available for declined orders. You can propose a new time to initiate a new chat.</p>
+                <button onclick="showProposeTimeModal()" 
+                        class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors text-sm font-semibold">
+                    <i class="fas fa-clock mr-2"></i>Propose New Time
+                </button>
+            </div>
+            {% else %}
+            <!-- Quick replies (customer) -->
+            <div class="mb-3 flex flex-wrap gap-2">
+                <button type="button" onclick="sendQuickReply('Where are you?')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">Where are you?</button>
+                <button type="button" onclick="sendQuickReply('When will you reach?')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">When will you reach?</button>
+                <button type="button" onclick="sendQuickReply('Please confirm your arrival time')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">Please confirm</button>
+                <button type="button" onclick="sendQuickReply('I need to reschedule')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">Reschedule</button>
+            </div>
+
+            <form id="messageForm" class="flex gap-2">
+                <input type="hidden" id="conversationId" value="{{ conversation_id }}">
+                <input type="hidden" id="serviceRequestId" value="{{ service_request_id or '' }}">
+                <input type="text" 
+                       id="messageInput" 
+                       placeholder="Type your message..." 
+                       class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                       {% if not (service_request_status == 'accepted' or has_other_messages) %}disabled{% endif %}
+                       required>
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        {% if not (service_request_status == 'accepted' or has_other_messages) %}disabled{% endif %}>
+                    <i class="fas fa-paper-plane mr-2"></i>Send
+                </button>
+            </form>
+            {% if not (service_request_status == 'accepted' or has_other_messages) %}
+            <p class="text-xs text-gray-500 mt-2">Quick replies available — full chat enabled once the worker replies or after acceptance.</p>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Propose New Time Modal -->
+    <div id="proposeTimeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Propose New Time</h3>
+                <button onclick="hideProposeTimeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="proposeTimeForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">New Date *</label>
+                    <input type="date" 
+                           id="newDate" 
+                           required
+                           min="{{ datetime.now().strftime('%Y-%m-%d') }}"
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">New Time *</label>
+                    <select id="newTime" required
+                            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                        <option value="">Select time</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">1:00 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                        <option value="18:00">6:00 PM</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Additional Message (Optional)</label>
+                    <textarea id="proposalMessage" 
+                              rows="3"
+                              placeholder="Add any additional notes about the new time..."
+                              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" 
+                            class="flex-1 bg-yellow-500 text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition-colors font-semibold">
+                        <i class="fas fa-paper-plane mr-2"></i>Send Proposal
+                    </button>
+                    <button type="button" 
+                            onclick="hideProposeTimeModal()"
+                            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Availability Info -->
+    <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <h3 class="font-semibold text-yellow-800 mb-2">
+            <i class="fas fa-info-circle mr-2"></i>Worker Availability
+        </h3>
+        <div id="availabilityInfo" class="text-sm text-yellow-700">
+            <i class="fas fa-spinner fa-spin mr-2"></i>Loading availability...
+        </div>
+    </div>
+</div>
+
+<script>
+const _convEl = document.getElementById('conversationId');
+const conversationId = _convEl ? _convEl.value : null;
+const messagesContainer = document.getElementById('messagesContainer');
+
+// Auto-scroll to bottom
+function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Load availability
+async function loadAvailability() {
+    try {
+        const response = await fetch(`/api/check-availability/{{ worker.id }}`);
+        const data = await response.json();
+        
+        const infoDiv = document.getElementById('availabilityInfo');
+        let html = '';
+        
+        if (data.today && data.today.available) {
+            html += `<div class="mb-2"><strong>Today:</strong> Available from ${data.today.start_time || '09:00'} to ${data.today.end_time || '18:00'}</div>`;
+        } else {
+            html += `<div class="mb-2"><strong>Today:</strong> <span class="text-red-600">Not Available</span></div>`;
+        }
+        
+        if (data.tomorrow && data.tomorrow.available) {
+            html += `<div><strong>Tomorrow:</strong> Available from ${data.tomorrow.start_time || '09:00'} to ${data.tomorrow.end_time || '18:00'}</div>`;
+        } else {
+            html += `<div><strong>Tomorrow:</strong> <span class="text-red-600">Not Available</span></div>`;
+        }
+        
+        infoDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading availability:', error);
+    }
+}
+
+// Send message
+const messageForm = document.getElementById('messageForm');
+const messageInput = messageForm ? messageForm.querySelector('#messageInput') : null;
+
+if (messageForm && messageInput) {
+    messageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        try {
+            const response = await fetch('/api/send-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conversation_id: conversationId,
+                    message: message
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Add message to UI
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'mb-4 flex justify-end';
+                messageDiv.innerHTML = `
+                    <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-blue-500 text-white">
+                        <div class="text-xs font-semibold mb-1">You</div>
+                        <div class="text-sm">${message}</div>
+                        <div class="text-xs mt-1 opacity-75">Just now</div>
+                    </div>
+                `;
+                messagesContainer.appendChild(messageDiv);
+                messageInput.value = '';
+                scrollToBottom();
+            } else {
+                alert('Error sending message: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error sending message. Please try again.');
+        }
+    });
+}
+
+// Quick-reply send helper
+async function sendQuickReply(text) {
+    if (!conversationId) return;
+    try {
+        const response = await fetch('/api/send-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ conversation_id: conversationId, message: text })
+        });
+        const data = await response.json();
+        if (data.success) {
+            // append to UI
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'mb-4 flex justify-end';
+            messageDiv.innerHTML = `
+                <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-blue-500 text-white">
+                    <div class="text-xs font-semibold mb-1">You</div>
+                    <div class="text-sm">${text}</div>
+                    <div class="text-xs mt-1 opacity-75">Just now</div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+            // enable full input now that we've sent/there's activity? reload to reflect read flags
+            // location.reload(); // optional
+        } else {
+            alert('Error: ' + (data.error || 'Failed to send quick message'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Failed to send quick reply');
+    }
+}
+
+// Poll for new messages
+setInterval(async () => {
+    try {
+        const response = await fetch(`/api/get-messages/${conversationId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const currentMessageCount = messagesContainer.children.length;
+            if (data.messages.length > currentMessageCount) {
+                // Reload page to show new messages (simple approach)
+                // In production, you'd update the DOM directly
+                location.reload();
+            }
+        }
+    } catch (error) {
+        console.error('Error polling messages:', error);
+    }
+}, 3000); // Poll every 3 seconds
+
+// Propose New Time Modal
+function showProposeTimeModal() {
+    document.getElementById('proposeTimeModal').classList.remove('hidden');
+}
+
+function hideProposeTimeModal() {
+    document.getElementById('proposeTimeModal').classList.add('hidden');
+}
+
+// Handle time proposal form
+document.getElementById('proposeTimeForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const serviceRequestId = document.getElementById('serviceRequestId').value;
+    const newDate = document.getElementById('newDate').value;
+    const newTime = document.getElementById('newTime').value;
+    const message = document.getElementById('proposalMessage').value.trim();
+    
+    if (!serviceRequestId) {
+        alert('Service request ID not found');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/propose-new-time', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                service_request_id: serviceRequestId,
+                new_date: newDate,
+                new_time: newTime,
+                message: message
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('New time proposal sent! The worker will review it.');
+            hideProposeTimeModal();
+            // Reload to show the proposal message
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error sending proposal. Please try again.');
+    }
+});
+
+// Parse time proposals in messages (for display)
+function parseTimeProposals() {
+    // This function can be used to enhance proposal display if needed
+    // Time proposals are already handled in the template
+}
+
+// Accept new time (for workers)
+async function acceptNewTime(newDate, newTime) {
+    const serviceRequestId = document.getElementById('serviceRequestId').value;
+    
+    if (!serviceRequestId) {
+        alert('Service request ID not found');
+        return;
+    }
+    
+    if (!confirm(`Accept new time: ${newDate} at ${newTime}?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/accept-new-time', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                service_request_id: serviceRequestId,
+                new_date: newDate,
+                new_time: newTime
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('New time accepted! Service request updated.');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error accepting new time. Please try again.');
+    }
+}
+
+// Initial scroll
+scrollToBottom();
+loadAvailability();
+parseTimeProposals();
+</script>
+{% endblock %}

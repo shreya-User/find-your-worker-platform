@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Report Issue - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <div class="mb-6">
+            <h2 class="text-3xl font-bold mb-2">Report an Issue</h2>
+            <p class="text-gray-600">Help us improve by reporting any issues with your service</p>
+        </div>
+        
+        <!-- Service Info -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 class="font-semibold mb-2">Service Information</h3>
+            <p class="text-sm text-gray-700"><strong>Service Type:</strong> {{ service_request.service_type }}</p>
+            <p class="text-sm text-gray-700"><strong>Date:</strong> {{ service_request.preferred_date }}</p>
+            {% if session.user_type == 'user' %}
+            <p class="text-sm text-gray-700"><strong>Worker:</strong> {{ service_request.worker_name }}</p>
+            {% else %}
+            <p class="text-sm text-gray-700"><strong>Customer:</strong> {{ service_request.customer_name }}</p>
+            {% endif %}
+        </div>
+        
+        <form method="POST" id="reportForm">
+            <div class="mb-6">
+                <label class="block text-gray-700 font-semibold mb-2">
+                    Issue Type <span class="text-red-500">*</span>
+                </label>
+                <select name="issue_type" required
+                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                    <option value="">Select issue type</option>
+                    <option value="worker_not_responding">Worker Not Responding</option>
+                    <option value="poor_service_quality">Poor Service Quality</option>
+                    <option value="worker_late">Worker Arrived Late</option>
+                    <option value="wrong_service">Wrong Service Provided</option>
+                    <option value="payment_issue">Payment Issue</option>
+                    <option value="safety_concern">Safety Concern</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 font-semibold mb-2">
+                    Priority <span class="text-red-500">*</span>
+                </label>
+                <select name="priority" required
+                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                    <option value="low">Low - Can wait</option>
+                    <option value="medium" selected>Medium - Normal priority</option>
+                    <option value="high">High - Urgent</option>
+                    <option value="critical">Critical - Immediate attention needed</option>
+                </select>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 font-semibold mb-2">
+                    Description <span class="text-red-500">*</span>
+                </label>
+                <textarea name="description" 
+                          rows="6" 
+                          required
+                          placeholder="Please describe the issue in detail. Include any relevant information that will help us resolve it quickly..."
+                          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+                <p class="text-sm text-gray-500 mt-2">Please provide as much detail as possible</p>
+            </div>
+            
+            <div class="flex gap-4">
+                <button type="submit" 
+                        class="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors font-semibold">
+                    <i class="fas fa-paper-plane mr-2"></i>Submit Report
+                </button>
+                <a href="{{ url_for('track_service', request_id=request_id) }}" 
+                   class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold">
+                    <i class="fas fa-arrow-left mr-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+        
+        <!-- Info Box -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 class="font-semibold text-blue-800 mb-2">
+                <i class="fas fa-info-circle mr-2"></i>What happens next?
+            </h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+                <li>• Your report will be reviewed by our support team</li>
+                <li>• We'll contact you within 24 hours</li>
+                <li>• We take all reports seriously and will investigate</li>
+                <li>• Your feedback helps us improve our service</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

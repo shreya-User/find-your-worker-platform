@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with {{ customer.name }} - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg">
+        <!-- Chat Header -->
+        <div class="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-t-lg flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="bg-white rounded-full p-2 mr-3">
+                    <i class="fas fa-user text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold">{{ customer.name }}</h2>
+                    <p class="text-sm text-green-100">{{ customer.phone }}</p>
+                </div>
+            </div>
+            <a href="{{ url_for('worker_dashboard') }}" class="text-white hover:text-green-200">
+                <i class="fas fa-times text-2xl"></i>
+            </a>
+        </div>
+        
+        <!-- Messages Container -->
+        <div id="messagesContainer" class="h-96 overflow-y-auto p-4 bg-gray-50" style="max-height: 500px;">
+            {% for message in messages %}
+            <div class="mb-4 flex {{ 'justify-end' if message.sender_type == 'worker' else 'justify-start' }} message-item" data-message-id="{{ message.id }}">
+                <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg {{ 'bg-green-500 text-white' if message.sender_type == 'worker' else 'bg-white text-gray-800 shadow' }}">
+                    <div class="text-xs font-semibold mb-1">
+                        {{ message.sender_name }}
+                    </div>
+                    <div class="text-sm whitespace-pre-line">{{ message.message }}</div>
+                    {% if '**New Time Proposal**' in message.message and message.sender_type == 'user' %}
+                    <div id="proposal-{{ message.id }}" class="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
+                        <p class="text-xs font-semibold text-yellow-800 mb-2">
+                            <i class="fas fa-clock mr-1"></i>New Time Proposal
+                        </p>
+                        <button onclick="parseAndAcceptProposal('{{ message.message|replace("'", "\\'")|replace('"', '\\"') }}', {{ message.id }})" 
+                                class="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600">
+                            <i class="fas fa-check mr-1"></i>Accept New Time
+                        </button>
+                    </div>
+                    {% endif %}
+                    <div class="text-xs mt-1 opacity-75">
+                        {{ message.created_at }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Message Input -->
+        <div class="p-4 border-t bg-white rounded-b-lg">
+            {% if service_request_status == 'declined' and service_request_id %}
+            <div class="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-sm text-red-800 mb-1">
+                    <i class="fas fa-times-circle mr-2"></i>Service Status: <strong>Declined</strong>
+                </p>
+                <p class="text-xs text-red-700">Chat is not available for declined orders. The customer can propose a new time to create a new chat.</p>
+            </div>
+            {% else %}
+            <!-- Quick replies (worker) -->
+            <div class="mb-3 flex flex-wrap gap-2">
+                <button type="button" onclick="sendQuickReply('I will be late')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">I will be late</button>
+                <button type="button" onclick="sendQuickReply('I am not available')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">Not available</button>
+                <button type="button" onclick="sendQuickReply('I will be there soon')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">I will be soon</button>
+                <button type="button" onclick="sendQuickReply('I have reached')" class="px-3 py-1 bg-gray-100 rounded text-sm hover:bg-gray-200">I have reached</button>
+            </div>
+
+            <form id="messageForm" class="flex gap-2">
+                <input type="hidden" id="conversationId" value="{{ conversation_id }}">
+                <input type="hidden" id="serviceRequestId" value="{{ service_request_id or '' }}">
+                <input type="text" 
+                       id="messageInput" 
+                       placeholder="Type your message..." 
+                       class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-green-500"
+                       {% if not (service_request_status == 'accepted' or has_other_messages) %}disabled{% endif %}
+                       required>
+                <button type="submit" 
+                        class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                        {% if not (service_request_status == 'accepted' or has_other_messages) %}disabled{% endif %}>
+                    <i class="fas fa-paper-plane mr-2"></i>Send
+                </button>
+            </form>
+            {% if not (service_request_status == 'accepted' or has_other_messages) %}
+            <p class="text-xs text-gray-500 mt-2">Quick replies available — full chat enabled once the customer messages or after acceptance.</p>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+const _convEl = document.getElementById('conversationId');
+const conversationId = _convEl ? _convEl.value : null;
+const messagesContainer = document.getElementById('messagesContainer');
+
+// Auto-scroll to bottom
+function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Send message
+const messageForm = document.getElementById('messageForm');
+const messageInput = messageForm ? messageForm.querySelector('#messageInput') : null;
+
+if (messageForm && messageInput) {
+    messageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        try {
+            const response = await fetch('/api/send-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conversation_id: conversationId,
+                    message: message
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Add message to UI
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'mb-4 flex justify-end';
+                messageDiv.innerHTML = `
+                    <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-green-500 text-white">
+                        <div class="text-xs font-semibold mb-1">You</div>
+                        <div class="text-sm">${message}</div>
+                        <div class="text-xs mt-1 opacity-75">Just now</div>
+                    </div>
+                `;
+                messagesContainer.appendChild(messageDiv);
+                messageInput.value = '';
+                scrollToBottom();
+            } else {
+                alert('Error sending message: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error sending message. Please try again.');
+        }
+    });
+}
+
+// Quick-reply send helper
+async function sendQuickReply(text) {
+    if (!conversationId) return;
+    try {
+        const response = await fetch('/api/send-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ conversation_id: conversationId, message: text })
+        });
+        const data = await response.json();
+        if (data.success) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'mb-4 flex justify-end';
+            messageDiv.innerHTML = `
+                <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-green-500 text-white">
+                    <div class="text-xs font-semibold mb-1">You</div>
+                    <div class="text-sm">${text}</div>
+                    <div class="text-xs mt-1 opacity-75">Just now</div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to send quick message'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Failed to send quick reply');
+    }
+}
+
+// Poll for new messages
+setInterval(async () => {
+    try {
+        const response = await fetch(`/api/get-messages/${conversationId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const currentMessageCount = messagesContainer.children.length;
+            if (data.messages.length > currentMessageCount) {
+                // Reload page to show new messages
+                location.reload();
+            }
+        }
+    } catch (error) {
+        console.error('Error polling messages:', error);
+    }
+}, 3000); // Poll every 3 seconds
+
+// Parse proposal message and extract date/time
+function parseAndAcceptProposal(messageText, messageId) {
+    const dateMatch = messageText.match(/Date: (\d{4}-\d{2}-\d{2})/);
+    const timeMatch = messageText.match(/Time: (\d{2}:\d{2})/);
+    
+    if (dateMatch && timeMatch) {
+        acceptNewTime(dateMatch[1], timeMatch[1]);
+    } else {
+        alert('Could not parse time proposal. Please contact support.');
+    }
+}
+
+// Accept new time (for workers)
+async function acceptNewTime(newDate, newTime) {
+    const serviceRequestId = document.getElementById('serviceRequestId').value;
+    
+    if (!serviceRequestId) {
+        alert('Service request ID not found');
+        return;
+    }
+    
+    if (!confirm(`Accept new time proposal?\n\nDate: ${newDate}\nTime: ${newTime}\n\nThis will update the service request and change status to "accepted".`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/accept-new-time', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                service_request_id: serviceRequestId,
+                new_date: newDate,
+                new_time: newTime
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ New time accepted! Service request updated to "accepted" status.');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error accepting new time. Please try again.');
+    }
+}
+
+// Initial scroll
+scrollToBottom();
+</script>
+{% endblock %}

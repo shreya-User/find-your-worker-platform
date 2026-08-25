@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}Find Nearby Workers - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-6">
+        <h2 class="text-3xl font-bold mb-2">Find Nearby Workers</h2>
+        <p class="text-gray-600">Discover workers in your area with real-time location tracking</p>
+    </div>
+
+    <!-- Location Input -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 class="text-xl font-semibold mb-4">
+            <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i>Your Location
+        </h3>
+        
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <label for="service-type" class="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+                <select id="service-type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Select Service</option>
+                    <option value="Painting">Painting</option>
+                    <option value="AC Repair">AC Repair</option>
+                    <option value="Plumbing">Plumbing</option>
+                    <option value="Electrical">Electrical Work</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Cook">Cook</option>
+                    <option value="Driver">Driver</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="search-radius" class="block text-sm font-medium text-gray-700 mb-2">Search Radius</label>
+                <select id="search-radius" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="5">5 km</option>
+                    <option value="10" selected>10 km</option>
+                    <option value="15">15 km</option>
+                    <option value="20">20 km</option>
+                    <option value="30">30 km</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="mt-6 flex flex-col sm:flex-row gap-4">
+            <button onclick="getCurrentLocation()" 
+                    class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center">
+                <i class="fas fa-crosshairs mr-2"></i>Use My Current Location
+            </button>
+            
+            <button onclick="searchNearbyWorkers()" 
+                    class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-semibold flex items-center justify-center">
+                <i class="fas fa-search mr-2"></i>Find Nearby Workers
+            </button>
+        </div>
+        
+        <!-- Manual Location Input -->
+        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Or Enter Coordinates Manually:</h4>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label for="manual-lat" class="block text-xs text-gray-600 mb-1">Latitude</label>
+                    <input type="number" id="manual-lat" step="any" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., 19.0760">
+                </div>
+                <div>
+                    <label for="manual-lon" class="block text-xs text-gray-600 mb-1">Longitude</label>
+                    <input type="number" id="manual-lon" step="any" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., 72.8777">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-section" class="hidden">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 class="text-xl font-semibold mb-4">
+                <i class="fas fa-users text-green-500 mr-2"></i>Nearby Workers
+                <span id="results-count" class="ml-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">0 found</span>
+            </h3>
+            
+            <div id="workers-list" class="space-y-4">
+                <!-- Workers will be populated here -->
+            </div>
+        </div>
+        
+        <!-- Map -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-semibold mb-4">
+                <i class="fas fa-map text-purple-500 mr-2"></i>Location Map
+            </h3>
+            <div id="map-container" class="h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div class="text-center text-gray-500">
+                    <i class="fas fa-map-marked-alt text-4xl mb-2"></i>
+                    <p>Map will load when workers are found</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- No Results -->
+    <div id="no-results" class="hidden">
+        <div class="bg-white rounded-lg shadow-md p-12 text-center">
+            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">No Workers Found</h3>
+            <p class="text-gray-500 mb-4">Try adjusting your search criteria or expanding the search radius.</p>
+            <button onclick="expandSearch()" 
+                    class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-semibold">
+                Expand Search Area
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentLocation = null;
+let foundWorkers = [];
+
+function getCurrentLocation() {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by this browser.');
+        return;
+    }
+
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Getting Location...';
+    button.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            currentLocation = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            };
+            
+            document.getElementById('manual-lat').value = currentLocation.latitude.toFixed(6);
+            document.getElementById('manual-lon').value = currentLocation.longitude.toFixed(6);
+            
+            button.innerHTML = '<i class="fas fa-check mr-2"></i>Location Found';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
+        },
+        function(error) {
+            let errorMessage = 'Error getting location: ';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage += 'Location access denied. Please enable location services.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage += 'Location information unavailable.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage += 'Location request timed out.';
+                    break;
+                default:
+                    errorMessage += 'Unknown error occurred.';
+                    break;
+            }
+            alert(errorMessage);
+            button.innerHTML = originalText;
+            button.disabled = false;
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000
+        }
+    );
+}
+
+function searchNearbyWorkers() {
+    const serviceType = document.getElementById('service-type').value;
+    const radius = document.getElementById('search-radius').value;
+    
+    let latitude, longitude;
+    
+    if (currentLocation) {
+        latitude = currentLocation.latitude;
+        longitude = currentLocation.longitude;
+    } else {
+        latitude = parseFloat(document.getElementById('manual-lat').value);
+        longitude = parseFloat(document.getElementById('manual-lon').value);
+    }
+    
+    if (!serviceType) {
+        alert('Please select a service type.');
+        return;
+    }
+    
+    if (!latitude || !longitude) {
+        alert('Please provide location coordinates.');
+        return;
+    }
+
+    const searchButton = event.target.closest('button');
+    const originalText = searchButton.innerHTML;
+    searchButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Searching...';
+    searchButton.disabled = true;
+
+    fetch(`/nearby_workers?service_type=${encodeURIComponent(serviceType)}&lat=${latitude}&lon=${longitude}&radius=${radius}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                foundWorkers = data.workers;
+                displayWorkers(foundWorkers);
+                displayMap(latitude, longitude, foundWorkers);
+            } else {
+                alert('Error: ' + data.error);
+                showNoResults();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error searching for workers. Please try again.');
+            showNoResults();
+        })
+        .finally(() => {
+            searchButton.innerHTML = originalText;
+            searchButton.disabled = false;
+        });
+}
+
+function displayWorkers(workers) {
+    const resultsSection = document.getElementById('results-section');
+    const noResults = document.getElementById('no-results');
+    const workersList = document.getElementById('workers-list');
+    const resultsCount = document.getElementById('results-count');
+    
+    if (workers.length === 0) {
+        showNoResults();
+        return;
+    }
+    
+    resultsCount.textContent = `${workers.length} found`;
+    
+    workersList.innerHTML = '';
+    
+    workers.forEach(worker => {
+        const workerCard = document.createElement('div');
+        workerCard.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow';
+        
+        workerCard.innerHTML = `
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex-1">
+                    <h4 class="font-semibold text-lg">${worker.name}</h4>
+                    <p class="text-gray-600 text-sm"><i class="fas fa-map-marker-alt mr-1"></i>${worker.locality}, ${worker.city}</p>
+                    <p class="text-gray-600 text-sm"><i class="fas fa-phone mr-1"></i>${worker.phone}</p>
+                    <p class="text-gray-600 text-sm"><i class="fas fa-tools mr-1"></i>${worker.skills}</p>
+                </div>
+                <div class="text-right">
+                    <div class="flex items-center mb-1">
+                        <span class="text-lg font-bold text-green-600">₹${worker.hourly_rate}</span>
+                        <span class="text-sm text-gray-500 ml-1">/hour</span>
+                    </div>
+                    <div class="flex items-center mb-1">
+                        <span class="text-sm text-gray-600">${worker.distance_km} km away</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="flex">
+                            ${Array.from({length: 5}, (_, i) => 
+                                `<i class="fas fa-star text-xs ${i < worker.rating ? 'text-yellow-400' : 'text-gray-300'}"></i>`
+                            ).join('')}
+                        </div>
+                        <span class="text-xs text-gray-500 ml-1">${worker.rating}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <div class="flex flex-wrap gap-2">
+                    ${worker.police_verified ? '<span class="badge badge-verified"><i class="fas fa-shield-alt mr-1"></i>Verified</span>' : ''}
+                    ${worker.eco_friendly ? '<span class="badge badge-eco"><i class="fas fa-leaf mr-1"></i>Eco-Friendly</span>' : ''}
+                    ${worker.vaccination_status === 'fully_vaccinated' ? '<span class="badge badge-vaccinated"><i class="fas fa-syringe mr-1"></i>Vaccinated</span>' : ''}
+                </div>
+                
+                <div class="flex space-x-2">
+                    <a href="/book_service/${worker.id}" 
+                       class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm font-semibold">
+                        <i class="fas fa-calendar-check mr-1"></i>Book Now
+                    </a>
+                    <button onclick="viewWorkerDetails(${worker.id})" 
+                            class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm font-semibold">
+                        <i class="fas fa-eye mr-1"></i>View Details
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        workersList.appendChild(workerCard);
+    });
+    
+    resultsSection.classList.remove('hidden');
+    noResults.classList.add('hidden');
+}
+
+function displayMap(centerLat, centerLon, workers) {
+    const mapContainer = document.getElementById('map-container');
+    
+    // Simple map visualization (you can integrate with Google Maps or OpenStreetMap)
+    mapContainer.innerHTML = `
+        <div class="w-full h-full relative bg-gradient-to-br from-blue-100 to-green-100 rounded-lg overflow-hidden">
+            <div class="absolute inset-0 flex items-center justify-center">
+                <div class="text-center">
+                    <i class="fas fa-map-marked-alt text-6xl text-blue-500 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Interactive Map</h3>
+                    <p class="text-gray-600 mb-4">Your location: ${centerLat.toFixed(4)}, ${centerLon.toFixed(4)}</p>
+                    <div class="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                        <div class="bg-white p-3 rounded-lg shadow-sm">
+                            <div class="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full mx-auto mb-2">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <p class="text-sm font-medium">You</p>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg shadow-sm">
+                            <div class="flex items-center justify-center w-8 h-8 bg-green-500 text-white rounded-full mx-auto mb-2">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <p class="text-sm font-medium">${workers.length} Workers</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-4">
+                        For full map integration, integrate with Google Maps API
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function showNoResults() {
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('no-results').classList.remove('hidden');
+}
+
+function expandSearch() {
+    const radiusSelect = document.getElementById('search-radius');
+    const currentRadius = parseInt(radiusSelect.value);
+    
+    if (currentRadius < 30) {
+        radiusSelect.value = Math.min(currentRadius + 10, 30);
+        searchNearbyWorkers();
+    } else {
+        alert('Maximum search radius reached (30 km)');
+    }
+}
+
+function viewWorkerDetails(workerId) {
+    // Implement worker details modal or redirect to worker profile
+    alert(`View details for worker ID: ${workerId}`);
+}
+</script>
+{% endblock %}
+
+

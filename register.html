@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8">
+    <h2 class="text-3xl font-bold text-center mb-8">Create Your Account</h2>
+    
+    <form method="POST" id="registerForm">
+        <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-bold mb-3">I want to:</label>
+            <div class="flex space-x-6">
+                <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="user_type" value="user" checked onchange="toggleWorkerFields()" class="mr-2 w-5 h-5">
+                    <div class="flex items-center">
+                        <i class="fas fa-user-tie text-blue-500 text-2xl mr-2"></i>
+                        <span class="font-medium">Hire Workers</span>
+                    </div>
+                </label>
+                <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="user_type" value="worker" onchange="toggleWorkerFields()" class="mr-2 w-5 h-5">
+                    <div class="flex items-center">
+                        <i class="fas fa-hammer text-green-500 text-2xl mr-2"></i>
+                        <span class="font-medium">Offer Services</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Full Name *</label>
+                <input type="text" name="name" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Email *</label>
+                <input type="email" name="email" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Phone *</label>
+                <input type="tel" name="phone" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Password *</label>
+                <input type="password" name="password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">City *</label>
+                <input type="text" name="city" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">Locality/Area *</label>
+                <input type="text" name="locality" required placeholder="e.g., Andheri West, Koramangala" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2">Address</label>
+            <textarea name="address" rows="2" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+        
+        <div id="workerFields" class="hidden">
+            <div class="border-t pt-6 mb-6">
+                <h3 class="text-xl font-bold mb-4">Professional Details</h3>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Skills/Services You Offer *</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2">
+                        {% for category in categories %}
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2 skill-checkbox" value="{{ category.name }}">
+                            <span class="text-sm">{{ category.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="skills" id="skillsInput">
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Experience (years)</label>
+                        <input type="number" name="experience" min="0" max="50" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Hourly Rate (₹)</label>
+                        <input type="number" name="hourly_rate" min="100" step="50" placeholder="e.g., 500" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+                    <textarea name="description" rows="3" placeholder="Brief description of your services and expertise" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Verification & Badges</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="police_verified" class="mr-2">
+                            <i class="fas fa-shield-alt text-green-500 mr-2"></i>
+                            <span>I have police verification</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="eco_friendly" class="mr-2">
+                            <i class="fas fa-leaf text-green-500 mr-2"></i>
+                            <span>I offer eco-friendly services</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Vaccination Status</label>
+                    <select name="vaccination_status" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                        <option value="not_disclosed">Prefer not to disclose</option>
+                        <option value="fully_vaccinated">Fully Vaccinated</option>
+                        <option value="partially_vaccinated">Partially Vaccinated</option>
+                        <option value="not_vaccinated">Not Vaccinated</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 font-semibold text-lg">
+            <i class="fas fa-user-plus mr-2"></i>Create Account
+        </button>
+    </form>
+    
+    <p class="text-center mt-6 text-gray-600">
+        Already have an account? 
+        <a href="{{ url_for('login') }}" class="text-blue-600 hover:underline font-medium">Login here</a>
+    </p>
+</div>
+
+<script>
+function toggleWorkerFields() {
+    const workerFields = document.getElementById('workerFields');
+    const isWorker = document.querySelector('input[name="user_type"]:checked').value === 'worker';
+    workerFields.style.display = isWorker ? 'block' : 'none';
+}
+
+// Handle skill checkboxes
+document.querySelectorAll('.skill-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const selected = Array.from(document.querySelectorAll('.skill-checkbox:checked')).map(cb => cb.value);
+        document.getElementById('skillsInput').value = selected.join(', ');
+    });
+});
+</script>
+{% endblock %}

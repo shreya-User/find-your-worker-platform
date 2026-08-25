@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}Add Worker - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold mb-2">Add New Worker</h2>
+        <p class="text-gray-600">Manually register a new worker with complete details</p>
+    </div>
+
+    <form method="POST" class="space-y-8">
+        <!-- Personal Information -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-user text-blue-500 mr-2"></i>Personal Information
+            </h3>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                    <input type="text" id="name" name="name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter full name">
+                </div>
+                
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                    <input type="email" id="email" name="email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter email address">
+                </div>
+                
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter phone number">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                    <input type="password" id="password" name="password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter password">
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Information -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-map-marker-alt text-green-500 mr-2"></i>Address Information
+            </h3>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label for="address" class="block text-sm font-medium text-gray-700 mb-2">Full Address *</label>
+                    <textarea id="address" name="address" required rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Enter complete address"></textarea>
+                </div>
+                
+                <div>
+                    <label for="city" class="block text-sm font-medium text-gray-700 mb-2">City *</label>
+                    <input type="text" id="city" name="city" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter city">
+                </div>
+                
+                <div>
+                    <label for="locality" class="block text-sm font-medium text-gray-700 mb-2">Locality *</label>
+                    <input type="text" id="locality" name="locality" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter locality/area">
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Information -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-briefcase text-purple-500 mr-2"></i>Professional Information
+            </h3>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label for="skills" class="block text-sm font-medium text-gray-700 mb-2">Skills *</label>
+                    <textarea id="skills" name="skills" required rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Enter skills separated by commas (e.g., AC Repair, Electrical Work, Plumbing)"></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Separate multiple skills with commas</p>
+                </div>
+                
+                <div>
+                    <label for="experience" class="block text-sm font-medium text-gray-700 mb-2">Years of Experience *</label>
+                    <input type="number" id="experience" name="experience" required min="0" max="50"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter years of experience">
+                </div>
+                
+                <div>
+                    <label for="hourly_rate" class="block text-sm font-medium text-gray-700 mb-2">Hourly Rate (₹) *</label>
+                    <input type="number" id="hourly_rate" name="hourly_rate" required min="100" step="50"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter hourly rate in rupees">
+                </div>
+                
+                <div>
+                    <label for="availability" class="block text-sm font-medium text-gray-700 mb-2">Availability *</label>
+                    <select id="availability" name="availability" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="available">Available</option>
+                        <option value="busy">Busy</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Professional Description</label>
+                <textarea id="description" name="description" rows="4"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Describe your professional background, specializations, and approach to work"></textarea>
+            </div>
+            
+            <div class="mt-6">
+                <label for="certifications" class="block text-sm font-medium text-gray-700 mb-2">Certifications & Training</label>
+                <textarea id="certifications" name="certifications" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="List any certifications, training courses, or qualifications"></textarea>
+            </div>
+        </div>
+
+        <!-- Verification & Preferences -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-shield-alt text-red-500 mr-2"></i>Verification & Preferences
+            </h3>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label for="vaccination_status" class="block text-sm font-medium text-gray-700 mb-2">Vaccination Status *</label>
+                    <select id="vaccination_status" name="vaccination_status" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="not_vaccinated">Not Vaccinated</option>
+                        <option value="partially_vaccinated">Partially Vaccinated</option>
+                        <option value="fully_vaccinated">Fully Vaccinated</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="profile_image" class="block text-sm font-medium text-gray-700 mb-2">Profile Image URL</label>
+                    <input type="url" id="profile_image" name="profile_image"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter profile image URL (optional)">
+                </div>
+                
+                <div>
+                    <label for="initial_latitude" class="block text-sm font-medium text-gray-700 mb-2">Initial Location (Latitude)</label>
+                    <input type="number" id="initial_latitude" name="initial_latitude" step="any"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., 19.0760 (optional)">
+                </div>
+                
+                <div>
+                    <label for="initial_longitude" class="block text-sm font-medium text-gray-700 mb-2">Initial Location (Longitude)</label>
+                    <input type="number" id="initial_longitude" name="initial_longitude" step="any"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="e.g., 72.8777 (optional)">
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="police_verified" value="1" 
+                                   class="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm font-medium text-gray-700">
+                                <i class="fas fa-shield-alt text-green-500 mr-1"></i>Police Verified
+                            </span>
+                        </label>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" name="eco_friendly" value="1" 
+                                   class="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm font-medium text-gray-700">
+                                <i class="fas fa-leaf text-green-500 mr-1"></i>Eco-Friendly Services
+                            </span>
+                        </label>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_premium" value="1" 
+                                   class="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm font-medium text-gray-700">
+                                <i class="fas fa-crown text-yellow-500 mr-1"></i>Premium Worker
+                            </span>
+                        </label>
+                        
+                        <label class="flex items-center">
+                            <input type="checkbox" name="loyalty_points" value="1" 
+                                   class="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <span class="text-sm font-medium text-gray-700">
+                                <i class="fas fa-star text-purple-500 mr-1"></i>Give Initial Loyalty Points (100 pts)
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rating & Performance -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-star text-yellow-500 mr-2"></i>Initial Rating & Performance
+            </h3>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div>
+                    <label for="rating" class="block text-sm font-medium text-gray-700 mb-2">Initial Rating</label>
+                    <input type="number" id="rating" name="rating" min="0" max="5" step="0.1" value="0"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="0.0 to 5.0">
+                    <p class="text-xs text-gray-500 mt-1">Leave as 0 for new worker</p>
+                </div>
+                
+                <div>
+                    <label for="total_jobs" class="block text-sm font-medium text-gray-700 mb-2">Total Jobs Completed</label>
+                    <input type="number" id="total_jobs" name="total_jobs" min="0" value="0"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter completed jobs count">
+                </div>
+                
+                <div>
+                    <label for="loyalty_points_amount" class="block text-sm font-medium text-gray-700 mb-2">Loyalty Points</label>
+                    <input type="number" id="loyalty_points_amount" name="loyalty_points_amount" min="0" value="0"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Enter loyalty points">
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button type="submit" 
+                        class="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 font-semibold flex items-center justify-center">
+                    <i class="fas fa-plus mr-2"></i>Add Worker
+                </button>
+                
+                <a href="{{ url_for('admin_dashboard') if session.get('user_type') == 'admin' else url_for('index') }}" 
+                   class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 font-semibold flex items-center justify-center">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Form validation and enhancement
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    // Real-time validation
+    const requiredFields = form.querySelectorAll('input[required], textarea[required], select[required]');
+    
+    function validateForm() {
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('border-red-500');
+                field.classList.remove('border-gray-300');
+            } else {
+                field.classList.remove('border-red-500');
+                field.classList.add('border-gray-300');
+            }
+        });
+        
+        // Email validation
+        const email = document.getElementById('email');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email.value && !emailRegex.test(email.value)) {
+            isValid = false;
+            email.classList.add('border-red-500');
+            email.classList.remove('border-gray-300');
+        }
+        
+        // Phone validation
+        const phone = document.getElementById('phone');
+        const phoneRegex = /^[0-9]{10}$/;
+        if (phone.value && !phoneRegex.test(phone.value)) {
+            isValid = false;
+            phone.classList.add('border-red-500');
+            phone.classList.remove('border-gray-300');
+        }
+        
+        submitBtn.disabled = !isValid;
+        submitBtn.classList.toggle('opacity-50', !isValid);
+        submitBtn.classList.toggle('cursor-not-allowed', !isValid);
+    }
+    
+    // Add event listeners
+    requiredFields.forEach(field => {
+        field.addEventListener('input', validateForm);
+        field.addEventListener('blur', validateForm);
+    });
+    
+    // Initial validation
+    validateForm();
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+});
+</script>
+{% endblock %}

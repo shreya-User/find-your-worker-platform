@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Skill Training - Find My Worker{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-bold mb-2">Professional Development Center</h2>
+    <p class="text-lg text-gray-600">Enhance your skills and earn certifications to attract more customers</p>
+</div>
+
+<!-- Progress Overview -->
+<div class="grid md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-graduation-cap text-3xl text-blue-600"></i>
+        </div>
+        <p class="text-gray-600 mb-1">Courses Started</p>
+        <p class="text-3xl font-bold text-blue-600">0</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-certificate text-3xl text-green-600"></i>
+        </div>
+        <p class="text-gray-600 mb-1">Certificates Earned</p>
+        <p class="text-3xl font-bold text-green-600">0</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-clock text-3xl text-purple-600"></i>
+        </div>
+        <p class="text-gray-600 mb-1">Hours Learned</p>
+        <p class="text-3xl font-bold text-purple-600">0</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+        <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-star text-3xl text-yellow-600"></i>
+        </div>
+        <p class="text-gray-600 mb-1">Skill Level</p>
+        <p class="text-2xl font-bold text-yellow-600">Beginner</p>
+    </div>
+</div>
+
+<!-- Available Courses -->
+<div class="mb-8">
+    <h3 class="text-2xl font-bold mb-6">Available Courses</h3>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for course in courses %}
+        <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white">
+                <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-xs font-medium">
+                    {{ course.level }}
+                </span>
+            </div>
+            <div class="p-6">
+                <h4 class="text-xl font-semibold mb-3">{{ course.title }}</h4>
+                
+                <div class="flex items-center text-sm text-gray-600 mb-3">
+                    <i class="fas fa-clock mr-2"></i>
+                    <span>{{ course.duration }}</span>
+                </div>
+                
+                {% if course.certification %}
+                <div class="flex items-center text-sm text-green-600 mb-4">
+                    <i class="fas fa-certificate mr-2"></i>
+                    <span class="font-medium">Certificate Available</span>
+                </div>
+                {% endif %}
+                
+                <p class="text-gray-700 mb-6 text-sm">{{ course.description }}</p>
+                
+                <div class="flex space-x-3">
+                    <button onclick="startCourse('{{ course.title }}')" 
+                            class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 font-semibold">
+                        <i class="fas fa-play mr-1"></i>Start Course
+                    </button>
+                    <button class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        <i class="fas fa-bookmark"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Learning Path -->
+<div class="bg-white rounded-lg shadow-md p-8 mb-8">
+    <h3 class="text-2xl font-bold mb-6">Recommended Learning Path</h3>
+    
+    <div class="space-y-4">
+        <div class="flex items-start p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+            <div class="flex-shrink-0 w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold mr-4">
+                1
+            </div>
+            <div class="flex-1">
+                <h4 class="font-semibold text-lg mb-1">Safety Protocols and Best Practices</h4>
+                <p class="text-sm text-gray-600 mb-2">Essential foundation for all service professionals</p>
+                <div class="flex items-center text-sm text-green-600">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    <span>Recommended first step</span>
+                </div>
+            </div>
+            <button class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
+                Start
+            </button>
+        </div>
+        
+        <div class="flex items-start p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold mr-4">
+                2
+            </div>
+            <div class="flex-1">
+                <h4 class="font-semibold text-lg mb-1">Customer Service Excellence</h4>
+                <p class="text-sm text-gray-600 mb-2">Build lasting relationships with customers</p>
+                <div class="flex items-center text-sm text-blue-600">
+                    <i class="fas fa-lock mr-1"></i>
+                    <span>Complete step 1 first</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex items-start p-4 bg-gray-50 rounded-lg border-l-4 border-gray-400">
+            <div class="flex-shrink-0 w-10 h-10 bg-gray-400 text-white rounded-full flex items-center justify-center font-bold mr-4">
+                3
+            </div>
+            <div class="flex-1">
+                <h4 class="font-semibold text-lg mb-1">Digital Marketing for Service Professionals</h4>
+                <p class="text-sm text-gray-600 mb-2">Grow your personal brand and attract more clients</p>
+                <div class="flex items-center text-sm text-gray-500">
+                    <i class="fas fa-lock mr-1"></i>
+                    <span>Complete previous steps</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex items-start p-4 bg-gray-50 rounded-lg border-l-4 border-gray-400">
+            <div class="flex-shrink-0 w-10 h-10 bg-gray-400 text-white rounded-full flex items-center justify-center font-bold mr-4">
+                4
+            </div>
+            <div class="flex-1">
+                <h4 class="font-semibold text-lg mb-1">Time Management and Route Optimization</h4>
+                <p class="text-sm text-gray-600 mb-2">Optimize your workflow and increase earnings</p>
+                <div class="flex items-center text-sm text-gray-500">
+                    <i class="fas fa-lock mr-1"></i>
+                    <span>Advanced course</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Benefits of Training -->
+<div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg p-8 text-white">
+    <h3 class="text-2xl font-bold mb-6 text-center">Why Invest in Training?</h3>
+    <div class="grid md:grid-cols-3 gap-8">
+        <div class="text-center">
+            <i class="fas fa-chart-line text-5xl mb-4 text-blue-200"></i>
+            <h4 class="font-bold mb-2">Increase Earnings</h4>
+            <p class="text-sm text-blue-100">Certified workers earn 30% more on average</p>
+        </div>
+        <div class="text-center">
+            <i class="fas fa-star text-5xl mb-4 text-yellow-300"></i>
+            <h4 class="font-bold mb-2">Better Ratings</h4>
+            <p class="text-sm text-blue-100">Trained professionals get higher customer ratings</p>
+        </div>
+        <div class="text-center">
+            <i class="fas fa-users text-5xl mb-4 text-blue-200"></i>
+            <h4 class="font-bold mb-2">More Bookings</h4>
+            <p class="text-sm text-blue-100">Customers prefer certified and trained workers</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function startCourse(courseName) {
+    alert(`Starting course: ${courseName}\n\nThis feature will be available soon with video lessons, quizzes, and certifications!`);
+}
+</script>
+{% endblock %}

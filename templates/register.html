@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Login Page</title>
+	<link rel="stylesheet" href="{% static 'css/login.css' %}">
+	<style>
+		body{
+			background-image: url("{% static 'images/login.jpg' %}");
+			/* background-image: url("{% static 'images/login2.jpg' %}"); */
+		}
+	</style>
+</head>
+<body>
+	<section class="container">
+		<div class="span-6">
+		  <div class="login">
+			<h1>Create an account!</h1>
+			<div class="login-content">
+			<form method="POST" action="">
+			{% csrf_token %}
+            <label id="textLabel">Please enter your username</label>
+            <input type="text" name="username" id="text"  placeholder="Username">
+			<label id="emailLabel">Please enter a valid email</label>
+			<input type="email" name="email" id="email"  placeholder="Email">
+			<label id="passwordLabel">Please enter your password</label>
+			<input type="password" name="password" id="password" placeholder="Password"><br>
+			<p>Already have an account <a href="/">Login now!</a><br>
+			<input type="submit" value="Register">
+			{% for msg in messages %}
+			<h6 class="heady">{{msg}}</h6>
+			{% endfor%} 
+
+			</form>
+			</div>
+		  </div>
+		</div>
+		<div class="span-6">
+		  <div class="message">
+			<span class="first">Find</span>
+			<span class="second">my</span>
+			<span class="third">Worker</span>
+		</div>
+	</section>
+<script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
+
+
+				      				
